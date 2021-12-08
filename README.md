@@ -1,1 +1,0 @@
-# VAMR_project
