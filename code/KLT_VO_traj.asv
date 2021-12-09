@@ -262,7 +262,6 @@ for i = range
     initialize(tracker,prev_state.P,prev_img);
     
     [points1, inliers] = tracker(query_image);
-    disp(["Current tracked points", sum(inliers)]);
     points0 = prev_state.P(inliers,:);
     points1 = points1(inliers,:);
     worldPoints = prev_state.X(inliers,:);
@@ -273,7 +272,7 @@ for i = range
 
 %     % If using Estimate World Camera Pose
     [R,T, inlierIDX] = estimateWorldCameraPose...
-        (points1,worldPoints,intrinsics, 'Confidence', 95, 'MaxReprojectionError', 3, 'MaxNumTrials', 1000);
+        (points1,worldPoints,intrinsics, 'Confidence', 95, 'MaxReprojectionError', 5, 'MaxNumTrials', 100);
     outlierIDX = ~inlierIDX;
     inlierIDX = find(inlierIDX);
     outlierIDX = find(outlierIDX);
@@ -457,8 +456,7 @@ for i = range
     [F_new,PS] = removerows(F_new,'ind',rem_idx);
     [A_new,PS] = removerows(A_new,'ind',rem_idx);
     
-    disp(["New points triangulated", size(X_add,1)]);
-    X_orig = X_add;
+    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
         % Find the dropped outliers and only check for their triangulations
@@ -470,6 +468,7 @@ for i = range
         D_new = D_new(~L,:);
         E_new = E_new(~L,:);
         To_new = To_new(~L,:);
+        
         % Get blocks of  with same A
         [To_mat,ia,ic] = unique(To_search,'rows','stable');
         
@@ -527,20 +526,16 @@ for i = range
             
         end
     
-    [D_search,PS] = removerows(D_search,'ind',rem_idx);
-    [E_search,PS] = removerows(E_search,'ind',rem_idx);
-    [To_search,PS] = removerows(To_search,'ind',rem_idx);
+    add_idx =     
+        
+    [C_new,PS] = removerows(C_new,'ind',rem_idx);
+    [F_new,PS] = removerows(F_new,'ind',rem_idx);
+    [A_new,PS] = removerows(A_new,'ind',rem_idx);
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     end
     
-    disp(["New points added from outliers", size(X_add,1)-size(X_orig,1)]);
-
     prev_img = query_image;
-    
-    prev_state.D = [D_new;D_search];
-    prev_state.E = [E_new;E_search];
-    prev_state.To = [To_new;To_search];
     
     prev_state.A = A_new;
     prev_state.C = C_new;
@@ -551,9 +546,9 @@ for i = range
     prev_state.Trajectory = cat(3, prev_state.Trajectory, [R_viz,T_viz']);
 
     frame = plot_screencast(prev_img, prev_state.P, prev_state.C, prev_state.n_landmark, prev_state.X, prev_state.Trajectory);
-    pause(0.1);
-    T_viz(1);
+    pause(0.001);
+    T_viz(1)
     
-    disp(["Current World points", size(prev_state.X,1)]);
+    size(worldPoints)
 end
 figure
