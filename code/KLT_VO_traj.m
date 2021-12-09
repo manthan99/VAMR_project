@@ -53,7 +53,7 @@ end
 
     intrinsics = cameraIntrinsics([K(1,1),K(2,2)],[K(1,3),K(2,3)], size(img0'));
     
-    corners0 = detectHarrisFeatures(img0);
+    corners0 = detectHarrisFeatures(img0, 'MinQuality' , 0.003);
     corners0 = corners0.Location;
     tracker = vision.PointTracker('MaxBidirectionalError',1);
     initialize(tracker,corners0,img0);
@@ -190,7 +190,7 @@ P_prev = inlierCurrPts;
 X_prev = worldPoints;
 
 %Detect Harris Features
-corners0 =  detectHarrisFeatures(prev_img);
+corners0 =  detectHarrisFeatures(prev_img, 'MinQuality' , 0.003);
 corners0 = corners0.Location;
 
 D_prev = corners0;
@@ -308,7 +308,7 @@ for i = range
     T_viz = T;
 
 %   %%%%Now do updates for the state
-    C_new = detectHarrisFeatures(query_image);
+    C_new = detectHarrisFeatures(query_image, 'MinQuality' , 0.003);
     C_new = C_new.Location;
     D_new = C_new;
 %     figure(7),
@@ -393,6 +393,9 @@ for i = range
     X_add = [];
     P_add = [];
     rem_idx = [];
+    D_search = [];
+    E_search = [];
+    To_search = [];
         
     %Now check for new triangulations
     if size(worldPoints,1) < 400
@@ -531,11 +534,12 @@ for i = range
     [E_search,PS] = removerows(E_search,'ind',rem_idx);
     [To_search,PS] = removerows(To_search,'ind',rem_idx);
     
+    disp(["New points added from outliers", size(X_add,1)-size(X_orig,1)]);
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     end
     
-    disp(["New points added from outliers", size(X_add,1)-size(X_orig,1)]);
-
+    
     prev_img = query_image;
     
     prev_state.D = [D_new;D_search];
