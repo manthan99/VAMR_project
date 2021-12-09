@@ -2,7 +2,7 @@
 clear all;
 close all;
 
-ds = 0; % 0: KITTI, 1: Malaga, 2: parking
+ds = 1; % 0: KITTI, 1: Malaga, 2: parking
 
 if ds == 0
     % need to set kitti_path to folder containing "05" and "poses"
@@ -224,6 +224,9 @@ prev_state.X = X_prev;
 prev_state.C = C_prev;
 prev_state.F = F_prev;
 prev_state.A = A_prev;
+prev_state.n_landmark = [length(prev_state.X(:,1))];
+prev_state.Trajectory = zeros(3,4,1);
+prev_state.Trajectory(:,:,1) = [R1', -R1'*T1'];
 
 %% Continuous operation
 
@@ -260,7 +263,7 @@ for i = range
 
 %     % If using Estimate World Camera Pose
     [R,T, inlierIDX] = estimateWorldCameraPose...
-        (points1,worldPoints,intrinsics, 'Confidence', 90, 'MaxReprojectionError', 5, 'MaxNumTrials', 20);
+        (points1,worldPoints,intrinsics, 'Confidence', 95, 'MaxReprojectionError', 5, 'MaxNumTrials', 100);
     inlierIDX = find(inlierIDX);
     
     % If P3p RANSAC
@@ -291,7 +294,6 @@ for i = range
 %     figure(2),
     R_viz = R;
     T_viz = T;
-    Trajectory(:,:,i-range(1)+2) = [R,T'];
 
 %     %Now do updates for the state
     C_new = detectHarrisFeatures(query_image);
@@ -420,7 +422,12 @@ for i = range
     prev_state.F = F_new;
     prev_state.X = [worldPoints; X_add];
     prev_state.P = [points1; P_add];
-    
+    prev_state.n_landmark = [prev_state.n_landmark; length(prev_state.X(:,1))];
+    prev_state.Trajectory = cat(3, prev_state.Trajectory, [R_viz,T_viz']);
+
+    frame = plot_screencast(prev_img, prev_state.P, prev_state.C, prev_state.n_landmark, prev_state.X, prev_state.Trajectory);
+    pause(0.001);
+    T_viz(1)
 %     figure(2),
 %     pcshow(prev_state.X,'VerticalAxis','Y','VerticalAxisDir','down', ...
 %     'MarkerSize',100);
@@ -432,3 +439,4 @@ for i = range
     
     size(worldPoints)
 end
+figure
