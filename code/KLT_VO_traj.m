@@ -36,10 +36,8 @@ end
 
 %% Bootstrap
 % need to set bootstrap_frames
-rng(7);
-
+rng(1);
 i = 1;
-
 if ds == 0
     img0 = imread([kitti_path '/05/image_0/',sprintf('%06d.png',i)]);
 end
@@ -55,7 +53,7 @@ end
 
     intrinsics = cameraIntrinsics([K(1,1),K(2,2)],[K(1,3),K(2,3)], size(img0'));
     
-    corners0 = detectHaSrrisFeatures(img0);
+    corners0 = detectHarrisFeatures(img0);
     corners0 = corners0.Location;
     tracker = vision.PointTracker('MaxBidirectionalError',1);
     initialize(tracker,corners0,img0);
@@ -97,7 +95,7 @@ end
         
         [F, inliersLogicalIndex]   = estimateFundamentalMatrix( ...
         points0, points1, 'Method','RANSAC',...
-        'NumTrials', 2e3, 'DistanceThreshold', 0.1);
+        'NumTrials', 1e3, 'DistanceThreshold', 0.1);
         
         inliersIndex  = find(inliersLogicalIndex);
         inlierInitPts  = points0(inliersIndex,:);
@@ -167,20 +165,20 @@ end
 end 
 %% Visualize the 3-D scene
 
-figure(2),
-
-
-% R,T should encode the pose of camera 2, such that M1 = [I|0] and M2=[R|t]
-
- pcshow(worldPoints,'VerticalAxis','Y','VerticalAxisDir','down', ...
-     'MarkerSize',30);
- hold on
- plotCamera('Size',1,'Orientation',R,'Location',...
-     T);
- hold on
- plotCamera('Size',1,'Orientation',eye(3),'Location',...
-     [0 0 0]');
- hold on
+% figure(2),
+% 
+% 
+% % R,T should encode the pose of camera 2, such that M1 = [I|0] and M2=[R|t]
+% 
+%  pcshow(worldPoints,'VerticalAxis','Y','VerticalAxisDir','down', ...
+%      'MarkerSize',30);
+%  hold on
+%  plotCamera('Size',1,'Orientation',R,'Location',...
+%      T);
+%  hold on
+%  plotCamera('Size',1,'Orientation',eye(3),'Location',...
+%      [0 0 0]');
+%  hold on
 
 
 %% Continuous Operation Setup
@@ -196,7 +194,7 @@ corners0 =  detectHarrisFeatures(prev_img);
 corners0 = corners0.Location;
 
 %Remove Duplicates from corner0 corresponding to P_prev (Note more
-%duplicates than actual are removed due to tolerance issues!!)
+%duplicates than actual are removed due to tolerance issues)
 [L,Locb] = ismembertol(corners0, P_prev, 0.008,'ByRows',true);
 L = ~L;
 corners0 = corners0(L,:);
@@ -230,7 +228,8 @@ prev_state.A = A_prev;
 %% Continuous operation
 
 range = i:last_frame;
-
+Trajectory = zeros(3,4,length(range)+1);
+Trajectory(:,:,1) = [R1, T1'];
 for i = range
     fprintf('\n\nProcessing frame %d\n=====================\n', i);
     if ds == 0
@@ -255,34 +254,44 @@ for i = range
     points1 = points1(inliers,:);
     worldPoints = prev_state.X(inliers,:);
     
-    figure(3),
-    showMatchedFeatures(prev_img,query_image,points0,points1, 'Montage');
-    legend('matched points 1','matched points 2');
+%     figure(3),
+%     showMatchedFeatures(prev_img,query_image,points0,points1, 'Montage');
+%     legend('matched points 1','matched points 2');
 
+%     % If using Estimate World Camera Pose
     [R,T, inlierIDX] = estimateWorldCameraPose...
-        (points1,worldPoints,intrinsics, 'Confidence', 95, 'MaxReprojectionError', 4, 'MaxNumTrials', 2e3);
+        (points1,worldPoints,intrinsics, 'Confidence', 90, 'MaxReprojectionError', 5, 'MaxNumTrials', 20);
     inlierIDX = find(inlierIDX);
+    
+    % If P3p RANSAC
+%     [R,T, inlierIDX] = ransacLocalization(points1', worldPoints', K);
+%     [R,T] = extrinsicsToCameraPose(R,T);
+%     inlierIDX = inlierIDX';
+%     inlierIDX = find(inlierIDX);
     
 %   % Motion only BA
     curr_pose = rigid3d(R,T);
     refinedPose = bundleAdjustmentMotion(worldPoints(inlierIDX,:),points1(inlierIDX,:),curr_pose,intrinsics);
     R = refinedPose.Rotation;
     T = refinedPose.Translation;
-
+    worldPoints = worldPoints(inlierIDX,:);
+    points1 = points1(inlierIDX,:);
+        
     [R1,T1] = cameraPoseToExtrinsics(R,T);
    
     p_reproj = worldToImage(intrinsics,R1,T1,worldPoints);
-    figure(6),
-    imshow(query_image, []);
-    hold on
-    plot(p_reproj(:,1), p_reproj(:,2), 'ys');
-    hold on
-    plot(points1(:,1), points1(:,2), 'rx');
-    hold on
+%     figure(6),
+%     imshow(query_image, []);
+%     hold on
+%     plot(p_reproj(:,1), p_reproj(:,2), 'ys');
+%     hold on
+%     plot(points1(:,1), points1(:,2), 'rx');
+%     hold on
     
 %     figure(2),
     R_viz = R;
     T_viz = T;
+    Trajectory(:,:,i-range(1)+2) = [R,T'];
 
 %     %Now do updates for the state
     C_new = detectHarrisFeatures(query_image);
@@ -340,7 +349,7 @@ for i = range
     rem_idx = [];
         
     %Now check for new triangulations
-    if size(worldPoints,1) < 150
+    if size(worldPoints,1) < 100
         
         %Get blocks of F with same A
         [A_mat,ia,ic] = unique(A_new,'rows','stable');
@@ -356,14 +365,15 @@ for i = range
             end
 
             % Triangulate two views to obtain 3-D map points
-            minParallax = 1; % In degrees
+            minParallax = 0.5; % In degrees
             A = reshape(A_mat(i,:),3,4);
             R = A(1:3,1:3);
             T = A(1:3,4)';
             cam_mat_0 = cameraMatrix(intrinsics, R, T);
             cam_mat_1 = cameraMatrix(intrinsics, R1, T1);
 
-            if(T == T1 | end_ind - start_ind < 10)
+%             if(T == T1 | end_ind - start_ind < 10)
+            if(T == T1)
                 %Skip the iteration since they are the current points
                 continue
             end
@@ -411,14 +421,14 @@ for i = range
     prev_state.X = [worldPoints; X_add];
     prev_state.P = [points1; P_add];
     
-    figure(2),
-    pcshow(prev_state.X,'VerticalAxis','Y','VerticalAxisDir','down', ...
-    'MarkerSize',100);
+%     figure(2),
+%     pcshow(prev_state.X,'VerticalAxis','Y','VerticalAxisDir','down', ...
+%     'MarkerSize',100);
+%     
+%     for j=1:i-range(1)+2
+%         plotCamera('Size',1,'Orientation',Trajectory(:,1:3,j),'Location',Trajectory(:,4,j));
+%         hold on
+%     end
     
-    plotCamera('Size',1,'Orientation',R_viz,'Location',T_viz);
-    hold on
-    
-    close(6);
-    
-    pause(0.1);   
+    size(worldPoints)
 end
