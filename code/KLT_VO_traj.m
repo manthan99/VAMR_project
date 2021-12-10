@@ -197,8 +197,14 @@ D_prev = corners0;
 E_prev = corners0;
 %Remove Duplicates from corner0 corresponding to P_prev (Note more
 %duplicates than actual are removed due to tolerance issues)
-[L,Locb] = ismembertol(corners0, P_prev, 0.008,'ByRows',true);
-L = ~L;
+
+% [L,Locb] = ismembertol(corners0, P_prev, 0.008,'ByRows',true);
+% L = ~L;
+
+samePointPixelThreshhold = 4;
+[Locb,distanceToClosestPoint] = dsearchn(P_prev,corners0);
+L = distanceToClosestPoint > samePointPixelThreshhold;
+
 corners0 = corners0(L,:);
 
 % figure(3),
@@ -317,10 +323,22 @@ for i = range
 %     plot(C_new(:,1),C_new(:,2), 'rx');
 %     hold on
     
-    L = ismembertol(C_new, points1, 0.008,'ByRows',true);
-    L = ~L;
-    C_new = C_new(L,:);
+
+%     dbNewPoints = size(C_new,1)
+%     dbKLTTrackedPoints = size(points1,1)
+%     dbEstiamtedRemainingPoints= dbNewPoints - dbKLTTrackedPoints
     
+%     L = ismembertol(C_new, points1, 0.008,'ByRows',true);
+%     L = ~L;
+%     dbActualRemainingPointsOld = sum(L)
+    
+    [~,distanceToClosestPoint] = dsearchn(points1,C_new);
+    L = distanceToClosestPoint > samePointPixelThreshhold;
+
+    C_new = C_new(L,:);
+
+%    dbActualRemainingPointsNew = sum(L)
+
 %     figure(7),
 % %     imshow(query_image, []);
 % %     hold on
@@ -339,7 +357,12 @@ for i = range
     F_old = prev_state.F(inliers,:);
     A_old = prev_state.A(inliers,:);
     
-    [L,Locb] = ismembertol(C_new, C_matched, 0.008,'ByRows',true);
+%     [L,Locb] = ismembertol(C_new, C_matched, 0.008,'ByRows',true);
+    
+    [Locb,distanceToClosestPoint] = dsearchn(C_matched,C_new);
+    L = distanceToClosestPoint > samePointPixelThreshhold;
+    L = ~L;
+
     F_new = C_new;
     A_new = [R1,T1'];
     A_new = reshape(A_new,1,[]);
@@ -370,7 +393,12 @@ for i = range
     E_old = prev_state.E(inliers,:);
     To_old = prev_state.To(inliers,:);
     
-    [L,Locb] = ismembertol(D_new, D_matched, 0.008,'ByRows',true);
+%     [L,Locb] = ismembertol(D_new, D_matched, 0.008,'ByRows',true);
+
+    [Locb,distanceToClosestPoint] = dsearchn(D_matched,D_new);
+    L = distanceToClosestPoint > samePointPixelThreshhold;
+    L = ~L;
+
     E_new = D_new;
     To_new = [R1,T1'];
     To_new = reshape(To_new,1,[]);
@@ -466,7 +494,13 @@ for i = range
     
         % Find the dropped outliers and only check for their triangulations
         rem_idx = [];
-        L = ismembertol(D_new, points_outliers, 0.008,'ByRows',true);
+
+%         L = ismembertol(D_new, points_outliers, 0.008,'ByRows',true);
+
+        [Locb,distanceToClosestPoint] = dsearchn(points_outliers,D_new);
+        L = distanceToClosestPoint > samePointPixelThreshhold;
+        L = ~L;
+
         D_search = D_new(L,:);
         E_search = E_new(L,:);
         To_search = To_new(L,:);
