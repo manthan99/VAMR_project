@@ -323,19 +323,18 @@ for i = range
 %     plot(C_new(:,1),C_new(:,2), 'rx');
 %     hold on
     
-
-%     dbNewPoints = size(C_new,1)
-%     dbKLTTrackedPoints = size(points1,1)
-%     dbEstiamtedRemainingPoints= dbNewPoints - dbKLTTrackedPoints
-    
 %     L = ismembertol(C_new, points1, 0.008,'ByRows',true);
 %     L = ~L;
-%     dbActualRemainingPointsOld = sum(L)
     
     [~,distanceToClosestPoint] = dsearchn(points1,C_new);
     L = distanceToClosestPoint > samePointPixelThreshhold;
+    
+    
+    %DBshowDiscardedFeatures(query_image, C_new, points1, L);
 
     C_new = C_new(L,:);
+
+    
 
 %    dbActualRemainingPointsNew = sum(L)
 

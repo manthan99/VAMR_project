@@ -2,8 +2,8 @@ function [frame] = plot_screencast(img, P, C, landmark_n, landmarks, Trajectory)
 ax1 = subplot(2,4,[1,2], 'color', [1,1,1]);
 imshow(img, 'Parent', ax1);
 hold on
-plot(P(:,1), P(:,2), 'g+', 'Parent', ax1);
 plot(C(:,1), C(:,2), 'ro', 'Parent', ax1);
+plot(P(:,1), P(:,2), 'g+', 'Parent', ax1);
 title('Current image', 'Parent', ax1);
 hold off
 

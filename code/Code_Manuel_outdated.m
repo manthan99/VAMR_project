@@ -7,7 +7,7 @@ ds = 0; % 0: KITTI, 1: Malaga, 2: parking
 
 if ds == 0
     % need to set kitti_path to folder containing "05" and "poses"
-    kitti_path = 'kitti';
+    kitti_path = '../data/kitti05/kitti';
     %assert(exist(kitti_path, 'var') ~= 0);
     ground_truth = load([kitti_path '/poses/05.txt']);
     ground_truth = ground_truth(:, [end-8 end]);
@@ -129,6 +129,7 @@ cameraPose = rigid3d(orient, loc);
 tform1 = cameraPoseToExtrinsics(cameraPose);
 camMatrix1 = cameraMatrix(cameraParams, tform1);
 
+
 % Compute the 3-D points
 points3D = triangulate(matchedPoints0, matchedPoints1, camMatrix0, camMatrix1);
 
@@ -169,6 +170,7 @@ showMatchedFeatures(img0,img1,inlierPoints0,inlierPoints1);
 title('Remaining Inlier Points');
 
 
+%{
 % Visualize the camera locations and orientations
 cameraSize = 0.3;
 figure
@@ -193,11 +195,32 @@ zlabel('z-axis');
 
 title('Up to Scale Reconstruction of the Scene');
 
+%}
+
+%% Some Tests
+corners1 = detectFASTFeatures(img1,...
+    'MinQuality',0.1,...
+    'MinContrast',0.2,...
+    'ROI',[1 1 size(img1,2) size(img1,1)]);
+
+corners1 = corners1.Location;
+samePointPixelThreshhold = 1;
+[Locb,distanceToClosestPoint] = dsearchn(inlierPoints1,corners1);
+L = distanceToClosestPoint > samePointPixelThreshhold;
+
+
+size(corners1,1)
+size(inlierPoints1,1)
+
+sum(L)
+figure(3)
+imshow(img1); hold on;
+scatter(corners1(:,1),corners1(:,2));
+scatter(inlierPoints1(:,1),inlierPoints1(:,2),'green','+');
+scatter(corners1(~L,1),corners1(~L,2),'red','x');
+legend('New Candidates', 'KLT Points', 'Discarded')
 
 return;
-
-
-
 %% Continuous operation
 range = (bootstrap_frames(2)+1):last_frame;
 for i = range
