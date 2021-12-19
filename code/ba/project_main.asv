@@ -3,8 +3,8 @@ clear all;
 close all;
 
 
-ds = 2; % 0: KITTI, 1: Malaga, 2: parking
-ba_n = 20; 
+ds = 0; % 0: KITTI, 1: Malaga, 2: parking
+ba_n = 10; 
 harris_vars = struct;
 harris_vars.harris_patch_size = 9;
 harris_vars.harris_kappa = 0.08;
@@ -154,15 +154,13 @@ for i = range
     
     [A_new, C_new, F_new, To_new, D_new, E_new, prev_state] = update_state(query_image, points1, R1, T1, harris_vars, prev_state);
     
-    if i==56
+    if i==55
         disp('');
     end
+    
     [X_add, P_add, X_add_id, D_search, E_search, To_search, A_new, C_new, F_new, D_new, E_new, To_new] = triangulate_new(A_new, C_new, F_new, To_new, D_new, E_new, prev_state, worldPoints, points_outliers, outlier_id, ds_vars, R1, T1);
     if length(X_add_id)~=size(X_add,1)
-        error1_count = error1_count+1;
-        len = min(length(X_add_id),size(X_add,1));
-        X_add_id = X_add_id(1:len);
-        X_add = X_add(1:len,:);
+        disp('error2');
     end
     %update ba vars
     if ~isempty(X_add)

@@ -1,4 +1,4 @@
-function [A_new, C_new, F_new, To_new, D_new, E_new, prev_state] = update_state(query_image, points1, worldPoints, R1, T1, R, T, i, harris_vars, prev_state)
+function [A_new, C_new, F_new, To_new, D_new, E_new, prev_state] = update_state(query_image, points1, R1, T1, harris_vars, prev_state)
 query_harris = harris(query_image, harris_vars.harris_patch_size, harris_vars.harris_kappa);
 C_new = selectKeypoints(...
     query_harris, harris_vars.num_keypoints, harris_vars.nonmaximum_supression_radius);

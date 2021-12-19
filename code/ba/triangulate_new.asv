@@ -1,6 +1,5 @@
-function [X_add, P_add, X_add_id, D_search, E_search, To_search, A_new, C_new, F_new, D_new, E_new, To_new] = triangulate_new(A_new, C_new, F_new, To_new, D_new, E_new, prev_state, worldPoints, points_outliers, outlier_id, ds_vars, R1, T1)
+function [X_add, P_add, X_id, D_search, E_search, To_search, A_new, C_new, F_new, D_new, E_new, To_new] = triangulate_new(A_new, C_new, F_new, To_new, D_new, E_new, worldPoints, points_outliers, outlier_id, ds_vars, R1, T1)
 X_add = []; %new world points added
-X_add_id = [];
 P_add = []; %new keypoints added corresponding to X
 rem_idx = [];
 D_search = [];
@@ -72,12 +71,12 @@ if size(worldPoints,1) < 400
 
     disp(["New points triangulated", size(X_add,1)]);
     X_orig = X_add;
-    X_add_id = [(length(prev_state.X_ba)+1:length(prev_state.X_ba)+length(X_add))'];
+    X_id = [X_id; (length(prev_state.X_ba)+1:length(prev_state.X_ba)+length(X_add))'];
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % Find the dropped outliers and only check for their triangulations
     rem_idx = [];
-    [L,locb] = ismembertol(D_new, points_outliers, 0.008,'ByRows',true); %ensure uniqueness of matching
+    [L,locb] = ismembertol(D_new, points_outliers, 0.008,'ByRows',true);
     D_search_id = outlier_id(locb(L));
     D_search = D_new(L,:);
     E_search = E_new(L,:);
@@ -140,7 +139,7 @@ if size(worldPoints,1) < 400
 
         X_add = [X_add; XYZpts(prlx_ind,:)];
         P_add = [P_add; Dpts(prlx_ind,:)];
-        X_add_id = [X_add_id; Dpts_id(prlx_ind)];
+        X_id = [X_id; Dpts_id(prlx_ind)];
         rem_idx = [rem_idx, rem_ind(prlx_ind)];
 
     end
