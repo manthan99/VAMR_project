@@ -1,4 +1,4 @@
-function [inlierCurrPts, worldPoints, R1, T1, currImg, ds_vars, i] = bootstrap(ds_vars, harris_vars)
+function [inlierCurrPts, worldPoints, R1, T1, R, T, currImg, ds_vars, i] = bootstrap(ds_vars, harris_vars)
     i = 1;
     
     if ds_vars.ds == 0

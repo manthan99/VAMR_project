@@ -1,7 +1,10 @@
-function [X_add, P_add, X_add_id, D_search, E_search, To_search, A_new, C_new, F_new, D_new, E_new, To_new] = triangulate_new(A_new, C_new, F_new, To_new, D_new, E_new, prev_state, worldPoints, points_outliers, outlier_id, ds_vars, R1, T1)
-X_add = []; %new world points added
-X_add_id = [];
+function [X_orig, X_old_add, P_add, P_old_add, X_orig_id, X_old_add_id, D_search, E_search, To_search, A_new, C_new, F_new, D_new, E_new, To_new] = triangulate_new(A_new, C_new, F_new, To_new, D_new, E_new, prev_state, worldPoints, points_outliers, outlier_id, ds_vars, R1, T1)
+X_orig = []; %new world points added
 P_add = []; %new keypoints added corresponding to X
+X_orig_id = [];
+X_old_add = [];
+P_old_add = [];
+X_old_add_id = [];
 rem_idx = [];
 D_search = [];
 E_search = [];
@@ -60,7 +63,7 @@ if size(worldPoints,1) < 400
         %Maintain a index array which specifies the points to be removed
         %from A, C and F
 
-        X_add = [X_add; XYZpts(prlx_ind,:)];
+        X_orig = [X_orig; XYZpts(prlx_ind,:)];
         P_add = [P_add; Cpts(prlx_ind,:)];
         rem_idx = [rem_idx, rem_ind(prlx_ind)];
 
@@ -70,14 +73,13 @@ if size(worldPoints,1) < 400
     [F_new,PS] = removerows(F_new,'ind',rem_idx);
     [A_new,PS] = removerows(A_new,'ind',rem_idx);
 
-    disp(["New points triangulated", size(X_add,1)]);
-    X_orig = X_add;
-    X_add_id = [(length(prev_state.X_ba)+1:length(prev_state.X_ba)+length(X_add))'];
+    disp(["New points triangulated", size(X_orig,1)]);
+    X_orig_id = [(size(prev_state.X_ba,1)+1:size(prev_state.X_ba,1)+size(X_orig,1))'];
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % Find the dropped outliers and only check for their triangulations
     rem_idx = [];
-    [L,locb] = ismembertol(D_new, points_outliers, 0.008,'ByRows',true); %ensure uniqueness of matching
+    [L,locb] = ismembertol(D_new, points_outliers, 0.008,'ByRows',true);
     D_search_id = outlier_id(locb(L));
     D_search = D_new(L,:);
     E_search = E_new(L,:);
@@ -138,9 +140,9 @@ if size(worldPoints,1) < 400
         %Maintain a index array which specifies the points to be removed
         %from A, C and F
 
-        X_add = [X_add; XYZpts(prlx_ind,:)];
-        P_add = [P_add; Dpts(prlx_ind,:)];
-        X_add_id = [X_add_id; Dpts_id(prlx_ind)];
+        X_old_add = [X_old_add; XYZpts(prlx_ind,:)];
+        P_old_add = [P_old_add; Dpts(prlx_ind,:)];
+        X_old_add_id = [X_old_add_id; Dpts_id(prlx_ind)];
         rem_idx = [rem_idx, rem_ind(prlx_ind)];
 
     end
@@ -149,7 +151,7 @@ if size(worldPoints,1) < 400
     [E_search,PS] = removerows(E_search,'ind',rem_idx);
     [To_search,PS] = removerows(To_search,'ind',rem_idx);
 
-    disp(["New points added from outliers", size(X_add,1)-size(X_orig,1)]);
+    disp(["New points added from outliers", size(X_old_add,1)]);
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 end

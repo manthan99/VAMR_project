@@ -69,16 +69,4 @@ D_new = D_new(ia,:);
 [To_new,index] = sortrows(To_new);
 D_new = D_new(index,:);
 E_new = E_new(index,:);
-
-% ba vars update
-% [L,locb] = ismembertol(prev_state.X_ba, worldPoints, 0.008, 'ByRows',true);
-% prev_state.P_ba = [prev_state.P_ba; [find(L==1), ones(length(locb(L)),1)*i, points1(locb(L),:)]];
-% prev_state.P_ba = sortrows(prev_state.P_ba);
-% 
-% Orientation = mat2cell(R,3);
-% Location = mat2cell(R,1);
-% ViewId = uint32(i);
-% prev_state.pose_table_ba = [prev_state.pose_table_ba; table(ViewId, Orientation, Location)];
-
-
 end

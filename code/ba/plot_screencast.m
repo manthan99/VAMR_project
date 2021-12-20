@@ -4,7 +4,7 @@ imshow(prev_state.prev_img, 'Parent', ax1);
 hold on
 plot(prev_state.P(:,1), prev_state.P(:,2), 'g+', 'Parent', ax1);
 plot(C(:,1), C(:,2), 'ro', 'Parent', ax1);
-title('Current image', 'Parent', ax1);
+title(['Current image, frame # ',num2str(prev_state.frame)], 'Parent', ax1);
 hold off
 
 ax2 = subplot(2,4,5);
@@ -19,8 +19,10 @@ ax3 = subplot(2,4,6);
 % plot(squeeze(prev_state.Trajectory(1,4,:)), squeeze(prev_state.Trajectory(3,4,:)), 'b-', 'Parent', ax3);
 % hold on
 loc = cell2mat(prev_state.pose_table_ba.Location);
-plot(loc(:,1), loc(:,3), 'r-', 'Parent', ax3);
+plot(loc(:,1), loc(:,3), 'r-', 'Parent', ax3, 'LineWidth',2, 'LineStyle',':');
 title('Full Trajectory', 'Parent', ax3);
+% axis equal
+axis padded
 % hold off
 
 % ax4 = subplot(2,4,[3,4,7,8]);
@@ -38,9 +40,9 @@ ax4 = subplot(2,4,[3,4,7,8]);
 plot(prev_state.X(:,1), prev_state.X(:,3), 'k.', 'Parent', ax4);
 hold on
 if length(loc(:,1))<20
-    plot(loc(:,1), loc(:,3), 'b', 'Parent', ax4);
+    plot(loc(:,1), loc(:,3), 'b', 'Parent', ax4, 'LineWidth',2, 'LineStyle',':');
 else
-    plot(loc(end-19:end,1), loc(end-19:end,3), 'b', 'Parent', ax4);
+    plot(loc(end-19:end,1), loc(end-19:end,3), 'b', 'Parent', ax4, 'LineWidth',2, 'LineStyle',':');
 end
 title('Trajectory of last 20 frames', 'Parent', ax4);
 hold off

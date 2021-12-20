@@ -1,4 +1,4 @@
-function [R, T, X_id, outlier_id, points1, points_outliers] = findpose(query_image, ds_vars, prev_state)
+function [R, T, worldPoints, X_id, outlier_id, points1, points_outliers] = findpose(query_image, ds_vars, prev_state)
     
     tracker = vision.PointTracker('MaxBidirectionalError',1);
     initialize(tracker, prev_state.P, prev_state.prev_img); %initialize klt on previous image and its keypoints
@@ -29,7 +29,7 @@ function [R, T, X_id, outlier_id, points1, points_outliers] = findpose(query_ima
     refinedPose = bundleAdjustmentMotion(worldPoints(inlierIDX,:),points1(inlierIDX,:),curr_pose, ds_vars.intrinsics);
     R = refinedPose.Rotation;
     T = refinedPose.Translation;
-%     worldPoints = worldPoints(inlierIDX,:);
+    worldPoints = worldPoints(inlierIDX,:);
     points1 = points1(inlierIDX,:);
     X_id = X_id(inlierIDX);
 end
