@@ -9,7 +9,7 @@ C_new = detect_features(harris_vars, query_image);
 
 D_new = C_new;
 
-L = ismembertol(C_new, points1, 0.008,'ByRows',true);
+L = ismembertol_Custom(C_new, points1, 0.008);
 L = ~L;
 C_new = C_new(L,:); %keypoints that are candidates in query_image but not tracked currently
 
@@ -23,7 +23,7 @@ C_old = prev_state.C(inliers,:);
 F_old = prev_state.F(inliers,:);
 A_old = prev_state.A(inliers,:);
 
-[L,Locb] = ismembertol(C_new, C_matched, 0.008,'ByRows',true);
+[L,Locb] = ismembertol_Custom(C_new, C_matched, 0.008);
 F_new = C_new;
 A_new = [R1,T1'];
 A_new = reshape(A_new,1,[]);
@@ -54,7 +54,7 @@ D_old = prev_state.D(inliers,:);
 E_old = prev_state.E(inliers,:);
 To_old = prev_state.To(inliers,:);
 
-[L,Locb] = ismembertol(D_new, D_matched, 0.008,'ByRows',true);
+[L,Locb] = ismembertol_Custom(D_new, D_matched, 0.008);
 E_new = D_new;
 To_new = [R1,T1'];
 To_new = reshape(To_new,1,[]);

@@ -3,7 +3,7 @@ clear all;
 close all;
 
 
-ds = 0; % 0: KITTI, 1: Malaga, 2: parking
+ds = 1; % 0: KITTI, 1: Malaga, 2: parking
 ba_n = 50; 
 harris_vars = struct;
 harris_vars.harris_patch_size = 9;
@@ -54,7 +54,7 @@ D_prev = corners0;
 E_prev = corners0;
 %Remove Duplicates from corner0 corresponding to P_prev (Note more
 %duplicates than actual are removed due to tolerance issues)
-[L,Locb] = ismembertol(corners0, P_prev, 0.008,'ByRows',true);
+[L,Locb] = ismembertol_Custom(corners0, P_prev, 0.008);
 L = ~L;
 corners0 = corners0(L,:);
 
@@ -168,9 +168,9 @@ for i = range
     prev_state.n_landmark = [prev_state.n_landmark; size(prev_state.X(:,1),1)];
     prev_state.frame = i;
     
-    L = ismembertol(C_new, F_new, 0.008,'ByRows',true);
+    L = ismembertol_Custom(C_new, F_new, 0.008);
     points_plot = C_new(~L,:);
-    L = ismembertol(D_new, E_new, 0.008,'ByRows',true);
+    L = ismembertol_Custom(D_new, E_new, 0.008);
     points_plot = [points_plot; D_new(~L,:)];
     
     frame = plot_screencast(prev_state, points_plot);

@@ -79,7 +79,7 @@ if size(worldPoints,1) < 400
 
     % Find the dropped outliers and only check for their triangulations
     rem_idx = [];
-    [L,locb] = ismembertol(D_new, points_outliers, 0.008,'ByRows',true);
+    [L,locb] = ismembertol_Custom(D_new, points_outliers, 0.008);
     D_search_id = outlier_id(locb(L));
     D_search = D_new(L,:);
     E_search = E_new(L,:);
