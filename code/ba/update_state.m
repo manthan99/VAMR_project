@@ -1,4 +1,4 @@
-function [A_new, C_new, F_new, To_new, D_new, E_new, prev_state] = update_state(query_image, points1, R1, T1, harris_vars, prev_state)
+function [A_new, C_new, F_new, To_new, D_new, E_new, prev_state] = update_state(query_image, points1, R1, T1, harris_vars, prev_state, klt_vars)
 % query_harris = harris(query_image, harris_vars.harris_patch_size, harris_vars.harris_kappa);
 % C_new = selectKeypoints(...
 %     query_harris, harris_vars.num_keypoints, harris_vars.nonmaximum_supression_radius);
@@ -13,7 +13,7 @@ L = ismembertol_Custom(C_new, points1, 0.008);
 L = ~L;
 C_new = C_new(L,:); %keypoints that are candidates in query_image but not tracked currently
 
-tracker = vision.PointTracker('MaxBidirectionalError',1);
+tracker = vision.PointTracker('MaxBidirectionalError',klt_vars.bidir_error, 'BlockSize', klt_vars.block);
 initialize(tracker, prev_state.C, prev_state.prev_img);
 
 [C_matched, inliers] = tracker(query_image); %tracking previous state candidates in current frame
@@ -44,7 +44,7 @@ F_new = F_new(index,:);
 
 %%%%%%%%%%%%%%%%%%%%%%%%% Now perform updates for D, E and To
 
-tracker = vision.PointTracker('MaxBidirectionalError',1);
+tracker = vision.PointTracker('MaxBidirectionalError',klt_vars.bidir_error, 'BlockSize', klt_vars.block);
 initialize(tracker, prev_state.D, prev_state.prev_img);
 
 [D_matched, inliers] = tracker(query_image);

@@ -13,6 +13,10 @@ harris_vars.descriptor_radius = 9;
 harris_vars.match_lambda = 5;
 harris_vars.num_keypoints = 1000;
 
+klt_vars = struct;
+klt_vars.block = [31,31];
+klt_vars.bidir_error = 1;
+
 ds_vars = get_ds_vars(ds);
 
 
@@ -20,7 +24,7 @@ ds_vars = get_ds_vars(ds);
 % need to set bootstrap_frames
 rng(1);
     
-[inlierCurrPts, worldPoints, R1, T1, R, T, currImg, ds_vars, i] = bootstrap(ds_vars, harris_vars);
+[inlierCurrPts, worldPoints, R1, T1, R, T, currImg, ds_vars, i] = bootstrap(ds_vars, harris_vars, klt_vars);
 
 %% Continuous Operation Setup
 
@@ -102,7 +106,7 @@ for i = range
     prev_state.P_ba = prev_state.P_ba(find(prev_state.P_ba(:,2)>i-ba_n), :); %deleting old views 2d pts
 
     %find pose
-    [R, T, worldPoints, X_id, outlier_id, points1, points_outliers] = findpose(query_image, ds_vars, prev_state);
+    [R, T, worldPoints, X_id, outlier_id, points1, points_outliers] = findpose(query_image, ds_vars, prev_state, klt_vars);
     R_viz = R; %current camera pose
     T_viz = T;
     [R1,T1] = cameraPoseToExtrinsics(R,T);
@@ -144,7 +148,7 @@ for i = range
 
     [R1,T1] = cameraPoseToExtrinsics(R,T);
     
-    [A_new, C_new, F_new, To_new, D_new, E_new, prev_state] = update_state(query_image, points1, R1, T1, harris_vars, prev_state);
+    [A_new, C_new, F_new, To_new, D_new, E_new, prev_state] = update_state(query_image, points1, R1, T1, harris_vars, prev_state, klt_vars);
     
     [X_orig, X_old_add, P_add, P_old_add, X_orig_id, X_old_add_id, D_search, E_search, To_search, A_new, C_new, F_new, D_new, E_new, To_new] = triangulate_new(A_new, C_new, F_new, To_new, D_new, E_new, prev_state, worldPoints, points_outliers, outlier_id, ds_vars, R1, T1);
     
