@@ -1,6 +1,6 @@
 function [R, T, worldPoints, X_id, outlier_id, points1, points_outliers] = findpose(query_image, ds_vars, prev_state)
     
-    tracker = vision.PointTracker('MaxBidirectionalError',1);
+    tracker = vision.PointTracker('MaxBidirectionalError',3, 'BlockSize', [101, 101]);
     initialize(tracker, prev_state.P, prev_state.prev_img); %initialize klt on previous image and its keypoints
     
     [points1, inliers] = tracker(query_image); %track those features in query_image

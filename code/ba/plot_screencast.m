@@ -40,9 +40,9 @@ ax4 = subplot(2,4,[3,4,7,8]);
 plot(prev_state.X(:,1), prev_state.X(:,3), 'k.', 'Parent', ax4);
 hold on
 if length(loc(:,1))<20
-    plot(loc(:,1), loc(:,3), 'b', 'Parent', ax4, 'LineWidth',2, 'LineStyle',':');
+    plot(loc(:,1), loc(:,3), 'b', 'Parent', ax4, 'LineWidth',2, 'LineStyle','-');
 else
-    plot(loc(end-19:end,1), loc(end-19:end,3), 'b', 'Parent', ax4, 'LineWidth',2, 'LineStyle',':');
+    plot(loc(end-19:end,1), loc(end-19:end,3), 'b', 'Parent', ax4, 'LineWidth',2, 'LineStyle','-');
 end
 title('Trajectory of last 20 frames', 'Parent', ax4);
 hold off
