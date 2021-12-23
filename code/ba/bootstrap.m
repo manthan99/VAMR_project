@@ -1,27 +1,10 @@
-function [inlierCurrPts, worldPoints, R1, T1, R, T, currImg, ds_vars, i] = bootstrap(ds_vars, harris_vars)
+function [inlierCurrPts, worldPoints, R1, T1, R, T, currImg, ds_vars, i] = bootstrap(ds_vars, harris_vars, klt_vars)
     i = 1;
     
-    if ds_vars.ds == 0
-        img0 = imread([ds_vars.path '/05/image_0/',sprintf('%06d.png',i)]);
-    end
-    if ds_vars.ds == 1
-        img0 = rgb2gray(imread([ds_vars.path ...
-            '/malaga-urban-dataset-extract-07_rectified_800x600_Images/' ...
-            ds_vars.left_images(i).name]));
-    end
-    if ds_vars.ds == 2
-        img0 = im2uint8(rgb2gray(imread([ds_vars.path ...
-            sprintf('/images/img_%05d.png',i)])));
-    end
+    img0 = load_image(ds_vars, i);
     
     ds_vars.intrinsics = cameraIntrinsics([ds_vars.K(1,1),ds_vars.K(2,2)],[ds_vars.K(1,3),ds_vars.K(2,3)], size(img0));
 
-%     query_harris = harris(img0, harris_vars.harris_patch_size, harris_vars.harris_kappa);
-%     corners0 = selectKeypoints(...
-%     query_harris, harris_vars.num_keypoints, harris_vars.nonmaximum_supression_radius);
-%     corners0 = flipud(corners0)';
-%     corners0 = detectMinEigenFeatures(img0, 'MinQuality' , 0.001);
-%     corners0 = corners0.Location;
     corners0 = detect_features(harris_vars, img0);
 
     figure(3),
@@ -30,7 +13,7 @@ function [inlierCurrPts, worldPoints, R1, T1, R, T, currImg, ds_vars, i] = boots
     plot(corners0(:,1),corners0(:,2), 'gs');
     hold on
     
-    tracker = vision.PointTracker('MaxBidirectionalError',1);
+    tracker = vision.PointTracker('MaxBidirectionalError',klt_vars.bidir_error, 'BlockSize', klt_vars.block);
     initialize(tracker,corners0,img0);
     
     isBootStrapped  = false;
@@ -38,18 +21,7 @@ function [inlierCurrPts, worldPoints, R1, T1, R, T, currImg, ds_vars, i] = boots
     
     %Loop until a proper initialization frame is found
     while(~isBootStrapped && i<ds_vars.last_frame)
-        if ds_vars.ds == 0
-            currImg = imread([ds_vars.path '/05/image_0/',sprintf('%06d.png',i)]);
-        end
-        if ds_vars.ds == 1
-        currImg = rgb2gray(imread([ds_vars.path ...
-            '/malaga-urban-dataset-extract-07_rectified_800x600_Images/' ...
-            ds_vars.left_images(i).name]));
-        end
-        if ds_vars.ds == 2
-            currImg = im2uint8(rgb2gray(imread([ds_vars.path ...
-            sprintf('/images/img_%05d.png',i)])));
-        end
+        currImg = load_image(ds_vars, i);
         disp(['Current Frame is ', num2str(i)]);
         
         [corners1,inliers] = tracker(currImg);
