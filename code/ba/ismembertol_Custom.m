@@ -1,5 +1,6 @@
 function [L,Locb] = ismembertol_Custom(A, B, tol)
-    [L,Locb] = ismembertol(A, B, tol,'ByRows',true);
+    tol = 2;
+    [L,Locb] = ismembertol(A, B, tol,'ByRows',true, 'DataScale', 1);
 end
 
 
