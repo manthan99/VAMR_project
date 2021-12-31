@@ -1,10 +1,10 @@
-function [A_new, C_new, F_new, To_new, D_new, E_new, prev_state] = update_state(query_image, points1, R1, T1, harris_vars, prev_state, klt_vars)
+function [A_new, C_new, F_new, To_new, D_new, E_new, prev_state] = update_state(query_image, points1, R1, T1, harris_vars, prev_state, klt_vars, ds_vars)
 % This functions finds new candidates for traingulation and structures them into variables of prev_state
 % Inputs: query_image: current frame, points1: image points currently tracked
 % R1,T1: transformation from world coordinates to camera coordinates
 % harris_vars: parameters for harris feature detection, prev_state: struct for continuous operation states, klt_vars: parameters for klt
 
-C_new = detect_features(harris_vars, query_image);
+C_new = detect_features(harris_vars, query_image, ds_vars);
 
 D_new = C_new;
 

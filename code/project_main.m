@@ -2,11 +2,11 @@
 clear all;
 close all;
 
-video_file = 'video_file_name_without_extension';
+video_file = 'parking_ohne_ba';
 
-ds = 0; % 0: KITTI, 1: Malaga, 2: parking
+ds = 2; % 0: KITTI, 1: Malaga, 2: parking
 
-ba_bool = true; %Bundle adjustment boolean variable
+ba_bool = false; %Bundle adjustment boolean variable
 ba_n = 50; %Bundle adjustment window size
 harris_vars = struct;
 harris_vars.harris_patch_size = 9;
@@ -48,7 +48,7 @@ P_prev = inlierCurrPts;
 X_prev = worldPoints;
 X_id = (1:size(X_prev,1))';
 
-corners0 = detect_features(harris_vars, prev_img);
+corners0 = detect_features(harris_vars, prev_img, ds_vars);
 
 D_prev = corners0;
 E_prev = corners0;
@@ -148,7 +148,7 @@ for i = range
 
     [R1,T1] = cameraPoseToExtrinsics(R,T);
     
-    [A_new, C_new, F_new, To_new, D_new, E_new, prev_state] = update_state(query_image, points1, R1, T1, harris_vars, prev_state, klt_vars);
+    [A_new, C_new, F_new, To_new, D_new, E_new, prev_state] = update_state(query_image, points1, R1, T1, harris_vars, prev_state, klt_vars, ds_vars);
     
     [X_orig, X_old_add, P_add, P_old_add, X_orig_id, X_old_add_id, D_search, E_search, To_search, A_new, C_new, F_new, D_new, E_new, To_new] = triangulate_new(A_new, C_new, F_new, To_new, D_new, E_new, prev_state, worldPoints, points_outliers, outlier_id, ds_vars, R1, T1);
     
