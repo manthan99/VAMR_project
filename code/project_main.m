@@ -4,7 +4,7 @@ close all;
 
 video_file = 'video_file_name_without_extension';
 
-ds = 1; % 0: KITTI, 1: Malaga, 2: parking
+ds = 0; % 0: KITTI, 1: Malaga, 2: parking
 
 ba_bool = true; %Bundle adjustment boolean variable
 ba_n = 50; %Bundle adjustment window size
@@ -122,25 +122,27 @@ for i = range
         x_id = unique(prev_state.P_ba(:,1));% vector of all x ids
         hist_xid = histc(prev_state.P_ba(:,1),x_id);
         x_id = x_id(1<hist_xid); %those x_ids which have more than 1 2d points correspondences
-        x_ba = prev_state.X_ba(x_id,:);
-        point_tracks = [];
-        pk=1;
-        for j=x_id'
-            pts = prev_state.P_ba(find(prev_state.P_ba(:,1)==j), 2:4);  %2d points corresponding to jth 3d point
-            if pk==1
-                point_tracks = [point_tracks; pointTrack(pts(:,1), pts(:,2:3))];
-                point_tracks = repmat(point_tracks, size(x_id,1), 1);
-            else
-                point_tracks(pk) = [pointTrack(pts(:,1), pts(:,2:3))];
+        if size(x_id,1)>0
+            x_ba = prev_state.X_ba(x_id,:);
+            point_tracks = [];
+            pk=1;
+            for j=x_id'
+                pts = prev_state.P_ba(find(prev_state.P_ba(:,1)==j), 2:4);  %2d points corresponding to jth 3d point
+                if pk==1
+                    point_tracks = [point_tracks; pointTrack(pts(:,1), pts(:,2:3))];
+                    point_tracks = repmat(point_tracks, size(x_id,1), 1);
+                else
+                    point_tracks(pk) = [pointTrack(pts(:,1), pts(:,2:3))];
+                end
+                pk = pk+1;
             end
-            pk = pk+1;
+            [xyzRefinedPoints,refinedPoses, reproj_errors] = bundleAdjustment(x_ba, point_tracks, prev_state.pose_table_ba, ds_vars.intrinsics); %length of 3d points and pointtrack array should be same, right?
+            prev_state.X_ba(x_id,:) = xyzRefinedPoints;
+            prev_state.pose_table_ba = refinedPoses;
+            worldPoints = prev_state.X_ba(X_id,:);
+            R = cell2mat(prev_state.pose_table_ba.Orientation(end));
+            T = cell2mat(prev_state.pose_table_ba.Location(end));
         end
-        [xyzRefinedPoints,refinedPoses, reproj_errors] = bundleAdjustment(x_ba, point_tracks, prev_state.pose_table_ba, ds_vars.intrinsics); %length of 3d points and pointtrack array should be same, right?
-        prev_state.X_ba(x_id,:) = xyzRefinedPoints;
-        prev_state.pose_table_ba = refinedPoses;
-        worldPoints = prev_state.X_ba(X_id,:);
-        R = cell2mat(prev_state.pose_table_ba.Orientation(end));
-        T = cell2mat(prev_state.pose_table_ba.Location(end));
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -152,7 +154,7 @@ for i = range
     
     %prev_state update %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     prev_state.X_ba = [prev_state.X_ba; X_orig];
-    prev_state.P_ba = [prev_state.P_ba; [X_orig_id, ones(size(X_orig_id,1),1)*i, P_add]];
+    prev_state.P_ba = [prev_state.P_ba; [X_orig_id, ones(size(X_orig_id,1),1)*i, P_add]; [X_old_add_id, ones(size(X_old_add_id,1),1)*i, P_old_add]];
     prev_state.P_ba = sortrows(prev_state.P_ba);
 
     prev_state.prev_img = query_image;
