@@ -10,7 +10,7 @@
 ### Built With
 
 * MATLAB version R2021b
-* Library: Image Toolbox
+* Library: Computer Vision Toolbox, Image Processing Toolbox
 
 <!-- HOW TO USE -->
 ## Getting Started
