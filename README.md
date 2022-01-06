@@ -16,9 +16,9 @@
 ## Getting Started
 
 1. Place KITTI, Malaga, Parking datasets(images) in the following location from the current folder, where _project_main.m_ is located.
-* KITTI: `../../data/kitti05/kitti`
-* Malaga: `../../data/malaga-urban-dataset-extract-07`
-* Parking: `../../data/parking`
+* KITTI: `../data/kitti05/kitti`
+* Malaga: `../data/malaga-urban-dataset-extract-07`
+* Parking: `../data/parking`
 * The path can be edited from the file _get_ds_vars.m_
 
 2. From _project_main.m_, set up `video_file`, `ds`, and `ba_bool`

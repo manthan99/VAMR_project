@@ -3,7 +3,7 @@ function corners0 = detect_features(harris_vars, prev_img, ds_vars)
 % Inputs: harris_vars: parameters for harris feature detection, prev_img: image
 % Outputs: corners0: harris features detected in image
 
-if ds_vars.ds~=2
+if ds_vars.ds==0
     corners0 = detectHarrisFeatures(prev_img);
     corners0 = corners0.Location;
 else

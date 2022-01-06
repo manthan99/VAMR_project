@@ -4,7 +4,7 @@ close all;
 
 video_file = 'parking_ohne_ba';
 
-ds = 2; % 0: KITTI, 1: Malaga, 2: parking
+ds = 0; % 0: KITTI, 1: Malaga, 2: parking
 
 ba_bool = false; %Bundle adjustment boolean variable
 ba_n = 50; %Bundle adjustment window size
