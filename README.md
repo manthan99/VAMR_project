@@ -1,5 +1,9 @@
 # VAMR_project
 
+Complete Visual Odometry pipeline implemented in MATLAB for the course project "[Vision Algorithms for Mobile Robotics](https://rpg.ifi.uzh.ch/teaching.html)" by Professor Davide Scaramuzza (University of Zurich). The pipeline was tested on three different datasets (Kitti-05, Malaga and Parking) and additonal Sliding Window Bundle Adjustment feature was added to improve the performance.  
+
+Please visit the following [link](https://www.youtube.com/playlist?list=PL41a83_sExo0vBHgH7e4u8pi1S1inXTLd) for the evaluation results.
+
 ### Computer Specifications
 
 * Processor: Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz
@@ -39,9 +43,6 @@
 * _triangulate_: Triangulate 3D landmarks using image points and poses of two frames
 * _budleAdjustment_: Pose and 3D landmarks Refinement
 * _bundleAdjustmentMotion_: Pose refinement while keeping the 3D landmarks fixed
-
-## Results
-Please visit the following [link](https://www.youtube.com/playlist?list=PL41a83_sExo0vBHgH7e4u8pi1S1inXTLd) for the evaluation results on KITTI-05, Malaga and Parking Datasets
 
 <!-- CONTACT -->
 ## Contact
