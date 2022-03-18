@@ -1,4 +1,6 @@
 function image = load_image(ds_vars, i)
+% Loads ith image from dataset specified by ds_vars
+
     if ds_vars.ds == 0
         image = imread([ds_vars.path '/05/image_0/' sprintf('%06d.png',i)]);
     elseif ds_vars.ds == 1

@@ -1,11 +1,18 @@
 function [inlierCurrPts, worldPoints, R1, T1, R, T, currImg, ds_vars, i] = bootstrap(ds_vars, harris_vars, klt_vars)
+% this function returns 3d landmark points and their corresponding image points. It chooses second frame for bootstrapping 
+% automatically by checking several conditions like min parallax and min no. of matches
+% Inputs - ds_vars: dataset variables, harris_vars: parameters for harris feature detection, klt_vars: parameters for klt
+% Outputs - inlierCurrPts: image points in current frame, worldPoints: 3d landmarks
+% R1,T1: transformation from world coordinates to camera coordinates
+% R,T: camera orientation and location, currImg - current frame
+
     i = 1;
     
     img0 = load_image(ds_vars, i);
     
     ds_vars.intrinsics = cameraIntrinsics([ds_vars.K(1,1),ds_vars.K(2,2)],[ds_vars.K(1,3),ds_vars.K(2,3)], size(img0));
 
-    corners0 = detect_features(harris_vars, img0);
+    corners0 = detect_features(harris_vars, img0, ds_vars);
 
     figure(3),
     imshow(img0, []);
@@ -27,6 +34,12 @@ function [inlierCurrPts, worldPoints, R1, T1, R, T, currImg, ds_vars, i] = boots
         [corners1,inliers] = tracker(currImg);
         points0 = corners0(inliers,:);
         points1 = corners1(inliers,:);
+
+        figure(4),
+        imshow(currImg, []);
+        hold on
+        plot(points1(:,1),points1(:,2), 'gs');
+        hold on
 
         minMatches = 150;
         i=i+1;

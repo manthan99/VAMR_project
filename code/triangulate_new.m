@@ -1,4 +1,13 @@
 function [X_orig, X_old_add, P_add, P_old_add, X_orig_id, X_old_add_id, D_search, E_search, To_search, A_new, C_new, F_new, D_new, E_new, To_new] = triangulate_new(A_new, C_new, F_new, To_new, D_new, E_new, prev_state, worldPoints, points_outliers, outlier_id, ds_vars, R1, T1)
+%This function triangulates new 3d landmarks satisfying several conditions such as min parallax
+%Inputs: A_new,C_new,F_new,To_new,D_new,E_new: matrices for updating candidate points variables in prev_state, prev_state: struct for continuous operation states
+%worldPoints: 3d landmarks currently tracked, points_outliers: outlier points from current frame, outlier_id: global id corresponding to outlier 3d landmarks
+%ds_vars: dataset variables, R1,T1: transformation from world coordinates to camera coordinates
+%Outputs: X_orig: new triangulations, X_old_add: triangulations from outliers
+%P_add: imagepoints corresponding to X_orig, P_old_add: imagepoints corresponding to X_old_add
+%X_orig_id: global id corresponding to X_orig, X_old_add_id: global id corresponding to X_old_add
+%D_search,E_search,To_search,A_new,C_new,F_new,D_new,E_new,To_new: matrices for updating candidate points variables in prev_state
+
 X_orig = []; %new world points added
 P_add = []; %new keypoints added corresponding to X
 X_orig_id = [];
@@ -56,7 +65,6 @@ if size(worldPoints,1) < 400
 
         % Check parallax
         prlx_ind = find(cosAngle < cosd(minParallax) & cosAngle>0);
-
 
         %Update the values of state
         %maintain P_add, X_add Matrixes and append the new entries to them
@@ -133,7 +141,6 @@ if size(worldPoints,1) < 400
 
         % Check parallax
         prlx_ind = find(cosAngle < cosd(minParallax) & cosAngle>0);
-
 
         %Update the values of state
         %maintain P_add, X_add Matrixes and append the new entries to them

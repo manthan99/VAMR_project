@@ -2,9 +2,12 @@
 clear all;
 close all;
 
+video_file = 'parking_ohne_ba';
 
-ds = 1; % 0: KITTI, 1: Malaga, 2: parking
-ba_n = 50; 
+ds = 0; % 0: KITTI, 1: Malaga, 2: parking
+
+ba_bool = false; %Bundle adjustment boolean variable
+ba_n = 50; %Bundle adjustment window size
 harris_vars = struct;
 harris_vars.harris_patch_size = 9;
 harris_vars.harris_kappa = 0.08;
@@ -32,8 +35,7 @@ rng(1);
 
 %for BA function %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 X_ba = worldPoints; %X_ba will store all 3d points ever found
-% P_ba columns - X_id, view_id, x, y
-P_ba = [linspace(1,size(worldPoints,1),size(worldPoints,1))', ones(size(worldPoints,1),1)*(i-1), inlierCurrPts];
+P_ba = [linspace(1,size(worldPoints,1),size(worldPoints,1))', ones(size(worldPoints,1),1)*(i-1), inlierCurrPts]; % columns - X_id, view_id, x, y
 
 ViewId = uint32(i-1); 
 Orientation = mat2cell(R, 3);
@@ -46,18 +48,11 @@ P_prev = inlierCurrPts;
 X_prev = worldPoints;
 X_id = (1:size(X_prev,1))';
 
-% query_harris = harris(prev_img, harris_vars.harris_patch_size, harris_vars.harris_kappa);
-% corners0 = selectKeypoints(...
-%     query_harris, harris_vars.num_keypoints, harris_vars.nonmaximum_supression_radius);
-% corners0 = flipud(corners0)';
-% corners0 =  detectMinEigenFeatures(prev_img, 'MinQuality' , 0.005);
-% corners0 = corners0.Location;
-corners0 = detect_features(harris_vars, prev_img);
+corners0 = detect_features(harris_vars, prev_img, ds_vars);
 
 D_prev = corners0;
 E_prev = corners0;
-%Remove Duplicates from corner0 corresponding to P_prev (Note more
-%duplicates than actual are removed due to tolerance issues)
+%Remove Duplicates from corner0 corresponding to P_prev
 [L,Locb] = ismembertol_Custom(corners0, P_prev, 0.008);
 L = ~L;
 corners0 = corners0(L,:);
@@ -99,6 +94,9 @@ prev_state.n_landmark = [size(prev_state.X,1)];
 range = i:ds_vars.last_frame;
 
 error1_count = 0;
+v = VideoWriter([video_file,'.avi']);
+v.FrameRate=5;
+open(v);
 for i = range
     fprintf('\n\nProcessing frame %d\n=====================\n', i);
     
@@ -120,41 +118,43 @@ for i = range
     prev_state.pose_table_ba = [prev_state.pose_table_ba; table(ViewId, Orientation, Location)];
 
     % Bundle adjustment %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%     if false %mod(i,10)==0
+    if ba_bool
         x_id = unique(prev_state.P_ba(:,1));% vector of all x ids
         hist_xid = histc(prev_state.P_ba(:,1),x_id);
         x_id = x_id(1<hist_xid); %those x_ids which have more than 1 2d points correspondences
-        x_ba = prev_state.X_ba(x_id,:);
-        point_tracks = [];
-        pk=1;
-        for j=x_id'
-            pts = prev_state.P_ba(find(prev_state.P_ba(:,1)==j), 2:4);  %2d points corresponding to jth 3d point
-            if pk==1
-                point_tracks = [point_tracks; pointTrack(pts(:,1), pts(:,2:3))];
-                point_tracks = repmat(point_tracks, size(x_id,1), 1);
-            else
-                point_tracks(pk) = [pointTrack(pts(:,1), pts(:,2:3))];
+        if size(x_id,1)>0
+            x_ba = prev_state.X_ba(x_id,:);
+            point_tracks = [];
+            pk=1;
+            for j=x_id'
+                pts = prev_state.P_ba(find(prev_state.P_ba(:,1)==j), 2:4);  %2d points corresponding to jth 3d point
+                if pk==1
+                    point_tracks = [point_tracks; pointTrack(pts(:,1), pts(:,2:3))];
+                    point_tracks = repmat(point_tracks, size(x_id,1), 1);
+                else
+                    point_tracks(pk) = [pointTrack(pts(:,1), pts(:,2:3))];
+                end
+                pk = pk+1;
             end
-            pk = pk+1;
+            [xyzRefinedPoints,refinedPoses, reproj_errors] = bundleAdjustment(x_ba, point_tracks, prev_state.pose_table_ba, ds_vars.intrinsics); %length of 3d points and pointtrack array should be same, right?
+            prev_state.X_ba(x_id,:) = xyzRefinedPoints;
+            prev_state.pose_table_ba = refinedPoses;
+            worldPoints = prev_state.X_ba(X_id,:);
+            R = cell2mat(prev_state.pose_table_ba.Orientation(end));
+            T = cell2mat(prev_state.pose_table_ba.Location(end));
         end
-        [xyzRefinedPoints,refinedPoses, reproj_errors] = bundleAdjustment(x_ba, point_tracks, prev_state.pose_table_ba, ds_vars.intrinsics); %length of 3d points and pointtrack array should be same, right?
-        prev_state.X_ba(x_id,:) = xyzRefinedPoints;
-        prev_state.pose_table_ba = refinedPoses;
-        worldPoints = prev_state.X_ba(X_id,:);
-        R = cell2mat(prev_state.pose_table_ba.Orientation(end));
-        T = cell2mat(prev_state.pose_table_ba.Location(end));
-%     end
+    end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     [R1,T1] = cameraPoseToExtrinsics(R,T);
     
-    [A_new, C_new, F_new, To_new, D_new, E_new, prev_state] = update_state(query_image, points1, R1, T1, harris_vars, prev_state, klt_vars);
+    [A_new, C_new, F_new, To_new, D_new, E_new, prev_state] = update_state(query_image, points1, R1, T1, harris_vars, prev_state, klt_vars, ds_vars);
     
     [X_orig, X_old_add, P_add, P_old_add, X_orig_id, X_old_add_id, D_search, E_search, To_search, A_new, C_new, F_new, D_new, E_new, To_new] = triangulate_new(A_new, C_new, F_new, To_new, D_new, E_new, prev_state, worldPoints, points_outliers, outlier_id, ds_vars, R1, T1);
     
-    %BA vars update %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %prev_state update %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     prev_state.X_ba = [prev_state.X_ba; X_orig];
-    prev_state.P_ba = [prev_state.P_ba; [X_orig_id, ones(size(X_orig_id,1),1)*i, P_add]];
+    prev_state.P_ba = [prev_state.P_ba; [X_orig_id, ones(size(X_orig_id,1),1)*i, P_add]; [X_old_add_id, ones(size(X_old_add_id,1),1)*i, P_old_add]];
     prev_state.P_ba = sortrows(prev_state.P_ba);
 
     prev_state.prev_img = query_image;
@@ -171,15 +171,18 @@ for i = range
     prev_state.P = [points1; P_add; P_old_add];
     prev_state.n_landmark = [prev_state.n_landmark; size(prev_state.X(:,1),1)];
     prev_state.frame = i;
-    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     L = ismembertol_Custom(C_new, F_new, 0.008);
     points_plot = C_new(~L,:);
     L = ismembertol_Custom(D_new, E_new, 0.008);
     points_plot = [points_plot; D_new(~L,:)];
     
     frame = plot_screencast(prev_state, points_plot);
+    writeVideo(v, frame2im(getframe(frame)));
     pause(0.1);    
     
     disp(["Current World points", size(prev_state.X,1)]);
 end
+close(v);
 figure
